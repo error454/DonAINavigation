@@ -15,6 +15,7 @@
 #include "DonNavigationManager.h"
 #include "DonAINavigationPrivatePCH.h"
 #include "Multithreading/DonNavigationWorker.h"
+#include "Engine/OverlapResult.h"
 
 #include <stdio.h>
 #include <limits>
@@ -284,7 +285,7 @@ void ADonNavigationManager::OnConstruction(const FTransform& Transform)
 #if WITH_EDITOR
 void ADonNavigationManager::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {	
-	UProperty* PropertyThatChanged = PropertyChangedEvent.Property;
+	FProperty* PropertyThatChanged = PropertyChangedEvent.Property;
 	FName PropertyName = PropertyThatChanged != NULL ? PropertyThatChanged->GetFName() : NAME_None;
 	
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(ADonNavigationManager, bDisplayWorldBoundary))
@@ -560,7 +561,7 @@ static FString GetMeshAssetName(UPrimitiveComponent* Mesh)
 	if (staticMesh)
 		assetName = staticMesh->GetStaticMesh()->GetName();
 	else if (skeletalMesh)
-		assetName = skeletalMesh->SkeletalMesh->GetName();
+		assetName = skeletalMesh->GetSkeletalMeshAsset()->GetName();
 	
 	return assetName;
 }
@@ -774,11 +775,9 @@ bool ADonNavigationManager::ScheduleDynamicCollisionUpdate(UPrimitiveComponent* 
 	if(bNeedsToScheduleTask)
 		AddDynamicCollisionTask(task);
 
-	return bOverallStatus;	
-
 	UE_LOG(DoNNavigationLog, Verbose, TEXT("Num collision tasks: %d"), ActiveDynamicCollisionTasks.Num());
 
-	return true;
+	return bOverallStatus;
 
 }
 
@@ -2001,7 +2000,7 @@ bool ADonNavigationManager::FindPathSolution_StressTesting(AActor* Actor, FVecto
 	{
 		if (Origin != Actor->GetActorLocation())
 		{
-			UE_LOG(DoNNavigationLog, Warning, TEXT("Forcibly shifting %s's pathfinding origin to new origin %s for viable pathfinding. (Can be disabled in QueryParams)"), *Actor->GetName());
+			UE_LOG(DoNNavigationLog, Warning, TEXT("Forcibly shifting %s's pathfinding origin to new origin for viable pathfinding. (Can be disabled in QueryParams)"), *Actor->GetName());
 			 Actor->SetActorLocation(Origin, false); // New design: We no longer teleport the pawn. If all our calculations have gone right the pawn should be free to travel to the new origin.
 		}
 	}
@@ -2836,7 +2835,7 @@ FVector ADonNavigationManager::FindRandomPointAroundOriginInNavWorld(AActor* Nav
 	for (int32 i = 0; i < MaxAttempts; i++)
 	{
 		float maxZAngularDispacement = FMath::Abs(MaxZAngularDispacement);
-		FRotator newDirection = FRotator(FMath::FRandRange(-maxZAngularDispacement, maxZAngularDispacement), FMath::FRandRange(0, 360), FMath::FRandRange(0, 360));
+		FRotator newDirection = FRotator(FMath::FRandRange(-maxZAngularDispacement, maxZAngularDispacement), FMath::FRandRange(0.0, 360.0), FMath::FRandRange(0.0, 360.0));
 		newDestination = Origin + newDirection.RotateVector(baseDisplacement);
 
 		if (MaxDesiredAltitude != -1.f)
