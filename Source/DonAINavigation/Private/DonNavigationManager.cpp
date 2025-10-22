@@ -89,7 +89,22 @@ ADonNavigationManager::ADonNavigationManager(const FObjectInitializer& ObjectIni
 // Debug Helpers:
 static ULineBatchComponent* GetDebugLineBatcher(const UWorld* InWorld, bool bPersistentLines, float LifeTime, bool bDepthIsForeground)
 {
-	return (InWorld ? (bDepthIsForeground ? InWorld->ForegroundLineBatcher : ((bPersistentLines || (LifeTime > 0.f)) ? InWorld->PersistentLineBatcher : InWorld->LineBatcher)) : NULL);
+	if (InWorld)
+	{
+		if (bDepthIsForeground)
+		{
+			return InWorld->GetLineBatcher(UWorld::ELineBatcherType::Foreground);
+		}
+
+		if (bPersistentLines || LifeTime > 0.f)
+		{
+		 return InWorld->GetLineBatcher(UWorld::ELineBatcherType::WorldPersistent);
+		}
+
+		return InWorld->GetLineBatcher(UWorld::ELineBatcherType::World);
+	}
+
+	return nullptr;
 }
 
 /* 
